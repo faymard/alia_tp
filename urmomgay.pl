@@ -71,10 +71,18 @@ fullGrid([HEAD|SUBGRILLE]) :- length(HEAD,7), fullGrid(SUBGRILLE).
 
 nextStep(GRILLE, _) :- fullGrid(GRILLE), write('complete grid, it\'s a draw\n').
 nextStep(GRILLE, JOUEUR) :- winningPosition(GRILLE, JOUEUR), write('Joueur '), write(JOUEUR), write(' won, game over').
-nextStep(GRILLE, 'x') :- play(GRILLE,'o').
+nextStep(GRILLE, 'x') :- playWinningMove(GRILLE,'o').
 nextStep(GRILLE, 'o') :- play(GRILLE,'x').
 
 play(GRILLE, JOUEUR) :- write(JOUEUR), write(' player, enter a valid column number N (1<=N<=7) : '), read(N), saveMove(GRILLE, N, JOUEUR, NEWGRILLE), displayGrid(NEWGRILLE,6),write('\n'),nextStep(NEWGRILLE,JOUEUR).
+
+playIARandom(GRILLE, JOUEUR):- random_between(1,7, N), nth1(N, G, X), length(X, L), L < 6 -> (saveMove(GRILLE, N, JOUEUR, NEWGRILLE), displayGrid(NEWGRILLE,6),write('\n'),nextStep(NEWGRILLE,JOUEUR)); playIARandom(GRILLE, JOUEUR).
+
+playWinningMove(GRILLE, JOUEUR):- playWinningMove(GRILLE, JOUEUR, 1).
+
+playWinningMove(GRILLE, JOUEUR, COLONNE):- nth1(COLONNE, G, X), length(X, L), L < 6 -> (saveMove(GRILLE, COLONNE, JOUEUR, NEWGRILLE), winningPosition(NEWGRILLE, JOUEUR), displayGrid(NEWGRILLE,6),write('\n'),nextStep(NEWGRILLE,JOUEUR)) ; (N is COLONNE + 1, playWinningMove(GRILLE, JOUEUR, N)).
+playWinningMove(GRILLE, JOUEUR, COLONNE):- nth1(COLONNE, G, X), length(X, L), L < 6 -> (saveMove(GRILLE, COLONNE, JOUEUR, NEWGRILLE), not(winningPosition(NEWGRILLE, JOUEUR)), N is COLONNE + 1, playWinningMove(GRILLE, JOUEUR, N)) ; (N is COLONNE + 1, playWinningMove(GRILLE, JOUEUR, N)).
+playWinningMove(GRILLE, JOUEUR, 8):- playIARandom(GRILLE, JOUEUR).
 
 
 start :- nextStep([[],[],[],[],[],[],[]],'x').
