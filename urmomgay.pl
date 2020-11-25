@@ -78,12 +78,18 @@ play(GRILLE, JOUEUR) :- write(JOUEUR), write(' player, enter a valid column numb
 
 playIARandom(GRILLE, JOUEUR):- random_between(1,7, N), nth1(N, G, X), length(X, L), L < 6 -> (saveMove(GRILLE, N, JOUEUR, NEWGRILLE), displayGrid(NEWGRILLE,6),write('\n'),nextStep(NEWGRILLE,JOUEUR)); playIARandom(GRILLE, JOUEUR).
 
+
 playWinningMove(GRILLE, JOUEUR):- playWinningMove(GRILLE, JOUEUR, 1).
 
-playWinningMove(GRILLE, JOUEUR, COLONNE):- nth1(COLONNE, G, X), length(X, L), L < 6 -> (saveMove(GRILLE, COLONNE, JOUEUR, NEWGRILLE), winningPosition(NEWGRILLE, JOUEUR), displayGrid(NEWGRILLE,6),write('\n'),nextStep(NEWGRILLE,JOUEUR)) ; (N is COLONNE + 1, playWinningMove(GRILLE, JOUEUR, N)).
-playWinningMove(GRILLE, JOUEUR, COLONNE):- nth1(COLONNE, G, X), length(X, L), L < 6 -> (saveMove(GRILLE, COLONNE, JOUEUR, NEWGRILLE), not(winningPosition(NEWGRILLE, JOUEUR)), N is COLONNE + 1, playWinningMove(GRILLE, JOUEUR, N)) ; (N is COLONNE + 1, playWinningMove(GRILLE, JOUEUR, N)).
+playWinningMove(GRILLE, JOUEUR, COLONNE):- COLONNE < 8, nth1(COLONNE, GRILLE, X), length(X, L), L < 6, saveMove(GRILLE, COLONNE, JOUEUR, NEWGRILLE), 
+										winningPosition(NEWGRILLE, JOUEUR), displayGrid(NEWGRILLE,6),write('\n'),nextStep(NEWGRILLE,JOUEUR), write('found winning position').
+
+playWinningMove(GRILLE, JOUEUR, COLONNE):- COLONNE < 8, nth1(COLONNE, GRILLE, X), length(X, L), L > 6,  write('full column'),
+												N is COLONNE + 1, playWinningMove(GRILLE, JOUEUR, N).
+playWinningMove(GRILLE, JOUEUR, COLONNE):- COLONNE < 8, nth1(COLONNE, GRILLE, X), length(X, L), L < 6, saveMove(GRILLE, COLONNE, JOUEUR, NEWGRILLE),
+													not(winningPosition(NEWGRILLE, JOUEUR)), N is COLONNE + 1, playWinningMove(GRILLE, JOUEUR, N).
+													
 playWinningMove(GRILLE, JOUEUR, 8):- playIARandom(GRILLE, JOUEUR).
 
 
 start :- nextStep([[],[],[],[],[],[],[]],'x').
-
