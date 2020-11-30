@@ -79,8 +79,15 @@ play(GRILLE, JOUEUR) :- write(JOUEUR), write(' player, enter a valid column numb
 playIARandom(GRILLE, JOUEUR):- random_between(1,7, N), nth1(N, GRILLE, X), length(X, L), L < 6 -> (saveMove(GRILLE, N, JOUEUR, NEWGRILLE), displayGrid(NEWGRILLE,6),write('\n'),nextStep(NEWGRILLE,JOUEUR)); playIARandom(GRILLE, JOUEUR).
 
 %%%%%%%%%%%%%%%%% MIN MAX %%%%%%%%%%%
+% chercher meilleur coup -> chercher meilleur coup pour l'adversaire -> chercher coup gagnant
 
-playKindOfMinMax(GRILLE, JOUEUR, PROFONDEUR):-
+% cas où la profondeur est impaire : on cherche à minimiser le prochain coup de l'adversaire
+playKindOfMinMax(GRILLE, JOUEUR, PROFONDEUR):- PROFONDEUR mod 2 == 0, 
+
+% cas où la profondeur est paire : on cherche à maximiser le coup joué
+playKindOfMinMax(GRILLE, JOUEUR, PROFONDEUR):- PROFONDEUR mod 2 == 1, 
+
+playKindOfMinMax(GRILLE, JOUEUR, PROFONDEUR, COLONNE):- COLONNE < 8, 
 
 playHypotheticalWinningMove(GRILLE, JOUEUR, COLONNE, NEWGRILLE):- COLONNE < 8, nth1(COLONNE, GRILLE, X), length(X, L), L < 6, saveMove(GRILLE, COLONNE, JOUEUR, NEWGRILLE), 
 										winningPosition(NEWGRILLE, JOUEUR).
