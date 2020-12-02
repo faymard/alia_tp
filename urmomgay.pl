@@ -88,23 +88,35 @@ playKindOfMinMax(GRILLE, JOUEUR, PROFONDEUR):- PROFONDEUR mod 2 == 0.
 playKindOfMinMax(GRILLE, JOUEUR, PROFONDEUR):- PROFONDEUR mod 2 == 1.
 
 playKindOfMinMax(GRILLE, JOUEUR, PROFONDEUR, COLONNE):- COLONNE < 8.
+booleanDeLaMort(IM):- IM == 1, true.
+booleanDeLaMort(IM):- false.
 
-playHypotheticalWinningMove(GRILLE, JOUEUR, COLONNE, NEWGRILLE):- COLONNE < 8, nth1(COLONNE, GRILLE, X), length(X, L), L < 6, saveMove(GRILLE, COLONNE, JOUEUR, NEWGRILLE), 
-										winningPosition(NEWGRILLE, JOUEUR).
-minimax(GRILLE, PROFONDEUR):-minimax(GRILLE, PROFONDEUR, 1).
+% playHypotheticalWinningMove(GRILLE, JOUEUR, COLONNE, NEWGRILLE):- COLONNE < 8, nth1(COLONNE, GRILLE, X), length(X, L), L < 6, saveMove(GRILLE, COLONNE, JOUEUR, NEWGRILLE), 
+% 										winningPosition(NEWGRILLE, JOUEUR).
+% minimax(GRILLE, PROFONDEUR):- TEST is (PROFONDEUR mod 2),  minimax(GRILLE, PROFONDEUR, 1, SCORE, TEST), write(SCORE).
 
-minimax(GRILLE, PROFONDEUR, COLONNE):- PROFONDEUR > 0, COLONNE < 4, write(PROFONDEUR), write(' '), write(COLONNE), write('\n'), P is PROFONDEUR - 1, minimax(GRILLE, P, COLONNE), C is COLONNE + 1, minimax(GRILLE, PROFONDEUR, C).
-%minimax(GRILLE, PROFONDEUR, COLONNE):- PROFONDEUR > 0, COLONNE == 3, write(PROFONDEUR), write(' '), write(COLONNE), write('\n'), P is PROFONDEUR + 1, minimax(GRILLE, P , 1).
-%minimax(GRILLE, PROFONDEUR, COLONNE):- PROFONDEUR == 0, COLONNE < 3, write(PROFONDEUR), write(' '), write(COLONNE), write('\n'),P is PROFONDEUR + 1, C is COLONNE + 1, minimax(GRILLE, P, C).
-minimax(GRILLE, PROFONDEUR, COLONNE):- PROFONDEUR == 1, write('end node\n').
-minimax(GRILLE, PROFONDEUR, COLONNE).
+% minimax(GRILLE, PROFONDEUR, COLONNE, SCORE, ISMAX):- PROFONDEUR > 0, COLONNE < 4, write(PROFONDEUR), write(' '), write(COLONNE), write('\n'), P is PROFONDEUR - 1, C is COLONNE + 1, 
+% 													SCORE is max(minimax(GRILLE, P, 1, NEWSCORE, ISMAX),  minimax(GRILLE, PROFONDEUR, C, NEWSCORE2, ISMAX)).
+% minimax(GRILLE, PROFONDEUR, COLONNE, SCORE, ISMAX):- PROFONDEUR == 1, booleanDeLaMort(ISMAX), score(GRILLE, COLONNE, SCORE).
+% minimax(GRILLE, PROFONDEUR, COLONNE, SCORE, ISMAX):- PROFONDEUR == 1, not(booleanDeLaMort(ISMAX)), score(GRILLE, COLONNE, SCORENEG), SCORE is SCORENEG * (-1).
+% minimax(GRILLE, PROFONDEUR, COLONNE, SCORE, ISMAX).
+
 
 
 %score du jeton ajouté à la position colonne
 
-score(GRILLE, COLONNE, SCORE):- score(GRILLE, COLONNE, SCORE, [[3,4,5,5,4,3], [4,6,8,8,6,4],[5,8,11,11,8,5], [7,10,13,13,10,7], [5,8,11,11,8,5], [4,6,8,8,6,4],[3,4,5,5,4,3]]).
+score(GRILLE, SCORE):- score(GRILLE,  1,1, SCORE, [[3,4,5,5,4,3], [4,6,8,8,6,4],[5,8,11,11,8,5], [7,10,13,13,10,7], [5,8,11,11,8,5], [4,6,8,8,6,4],[3,4,5,5,4,3]]), write(SCORE).
+score(GRILLE, LIGNE, COLONNE, SCORE, HEURISTIQUE):- COLONNE < 8, LIGNE == 7, NC is COLONNE + 1, %Arrivée à la fin d'une colonne
+													score(GRILLE, 1, NC, SCORE, HEURISTIQUE).
 
-score(GRILLE, COLONNE, SCORE, HEURISTIQUE):- nth1(COLONNE, GRILLE, X), length(X, L), nth1(COLONNE, HEURISTIQUE, Y), nth0(L, Y, SCORE).
+score(GRILLE, LIGNE, COLONNE, SCORE, HEURISTIQUE):- COLONNE == 8, SCORE is 0.
+score(GRILLE, LIGNE, COLONNE, SCORE, HEURISTIQUE):- COLONNE < 8, LIGNE < 7, nth1(COLONNE, GRILLE, C), elementOrEmpty(LIGNE, C, X), 
+													X \= [] -> ( 
+													X == 'o' -> (nth1(COLONNE, HEURISTIQUE, CH), nth1(LIGNE, CH, LH), NL is LIGNE + 1, score(GRILLE, NL, COLONNE, SCORE_APRES, HEURISTIQUE), SCORE is LH + SCORE_APRES ); %Si c'est une case de l'IA
+																nth1(COLONNE, HEURISTIQUE, CH), nth1(LIGNE, CH, LH), NL is LIGNE + 1, score(GRILLE, NL, COLONNE, SCORE_APRES, HEURISTIQUE), SCORE is SCORE_APRES - LH %Si c'est une case de l'adversaire
+													); NL is LIGNE + 1, score(GRILLE, NL, COLONNE, SCORE_APRES, HEURISTIQUE), SCORE is SCORE_APRES.
+
+
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 playWinningMove(GRILLE, JOUEUR):- playWinningMove(GRILLE, JOUEUR, 1).
