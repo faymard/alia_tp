@@ -59,9 +59,6 @@ minimax(Longueur,Joueur,JoueurActuel,Grille,BestLigne,BestColonne,BestScore,Scor
     calculerScore(Grille,Joueur,GrilleValeur,Score),
     estUnMeilleurMove(BestScore,ScoreInf,Ligne,Colonne,BestLigne,BestColonne).
 
-
-
-
 minimax(Longueur,Joueur,JoueurActuel,Grille,BestLigne,BestColonne,BestScore,Score):-
     grilleValeur(GrilleValeur),
     inv(Joueur,JoueurActuel),
