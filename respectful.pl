@@ -72,7 +72,7 @@ fullGrid([HEAD|SUBGRILLE]) :- length(HEAD,7), fullGrid(SUBGRILLE).
 nextStep(GRILLE, _) :- fullGrid(GRILLE), write('complete grid, it\'s a draw\n').
 nextStep(GRILLE, JOUEUR) :- winningPosition(GRILLE, JOUEUR), write('Joueur '), write(JOUEUR), write(' won, game over').
 nextStep(GRILLE, 'x') :- minimax(GRILLE, NEWGRILLE), displayGrid(NEWGRILLE,6),write('\n'),nextStep(NEWGRILLE,'o').
-nextStep(GRILLE, 'o') :- play(GRILLE,'x').
+nextStep(GRILLE, 'o') :- playWinningMove(GRILLE,'x').
 
 play(GRILLE, JOUEUR) :- write(JOUEUR), write(' player, enter a valid column number N (1<=N<=7) : '), read(N), saveMove(GRILLE, N, JOUEUR, NEWGRILLE), displayGrid(NEWGRILLE,6),write('\n'),nextStep(NEWGRILLE,JOUEUR).
 
@@ -115,10 +115,12 @@ eval_board([], Value) :-
     Value is 0.
 eval_board(Board, Value) :-
     winningPosition(Board, 'o'),
-    Value is 500, !.
+
+    Value is 500000.
 eval_board(Board, Value) :-
     winningPosition(Board, 'x'),
-    Value is -500, !.
+
+    Value is -250000.
 eval_board(Board, Value) :-
     fullGrid(Board),
     Value is 0.
@@ -213,17 +215,17 @@ playWinningMove(GRILLE, JOUEUR, COLONNE):- COLONNE < 8, nth1(COLONNE, GRILLE, X)
 playWinningMove(GRILLE, JOUEUR, 8):- playDefendingMove(GRILLE, JOUEUR).
 
 
-playDefendingMove(GRILLE, JOUEUR):- write('defending\n'), playDefendingMove(GRILLE, JOUEUR, 1).
+playDefendingMove(GRILLE, JOUEUR):- playDefendingMove(GRILLE, JOUEUR, 1).
 
-playDefendingMove(GRILLE, JOUEUR, COLONNE):- write('defending 1\n'), COLONNE < 8, nth1(COLONNE, GRILLE, X), length(X,L), L<6, saveMove(GRILLE, COLONNE, 'x', NEWGRILLE),
-										winningPosition(NEWGRILLE, 'x'), saveMove(GRILLE, COLONNE, JOUEUR, NEWGRILLE_IA), displayGrid(NEWGRILLE_IA, 6), write('\n'), nextStep(NEWGRILLE_IA, JOUEUR).
+playDefendingMove(GRILLE, JOUEUR, COLONNE):- COLONNE < 8, nth1(COLONNE, GRILLE, X), length(X,L), L<6, saveMove(GRILLE, COLONNE, 'o', NEWGRILLE),
+										winningPosition(NEWGRILLE, 'o'), saveMove(GRILLE, COLONNE, JOUEUR, NEWGRILLE_IA), displayGrid(NEWGRILLE_IA, 6), write('\n'), nextStep(NEWGRILLE_IA, JOUEUR).
 
-playDefendingMove(GRILLE, JOUEUR, COLONNE):- write('defending 2\n'), COLONNE < 8, nth1(COLONNE, GRILLE, X), length(X, L), L > 5,  write('full column\n'),
+playDefendingMove(GRILLE, JOUEUR, COLONNE):-  COLONNE < 8, nth1(COLONNE, GRILLE, X), length(X, L), L > 5,  write('full column\n'),
 												N is COLONNE + 1, playDefendingMove(GRILLE, JOUEUR, N).
-playDefendingMove(GRILLE, JOUEUR, COLONNE):- write('defending 3\n'), COLONNE < 8, nth1(COLONNE, GRILLE, X), length(X, L), L < 6, saveMove(GRILLE, COLONNE, 'x', NEWGRILLE),
-													not(winningPosition(NEWGRILLE, 'x')), N is COLONNE + 1, playDefendingMove(GRILLE, JOUEUR, N).
+playDefendingMove(GRILLE, JOUEUR, COLONNE):-  COLONNE < 8, nth1(COLONNE, GRILLE, X), length(X, L), L < 6, saveMove(GRILLE, COLONNE, 'o', NEWGRILLE),
+													not(winningPosition(NEWGRILLE, 'o')), N is COLONNE + 1, playDefendingMove(GRILLE, JOUEUR, N).
 													
-%playDefendingMove(GRILLE, JOUEUR, 8):- write('random\n'), playIARandom(GRILLE, JOUEUR).
+playDefendingMove(GRILLE, JOUEUR, 8):-  playIARandom(GRILLE, JOUEUR).
 
 
 start :- nextStep([[],[],[],[],[],[],[]],'x').

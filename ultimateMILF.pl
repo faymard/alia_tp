@@ -95,7 +95,7 @@ diagonalEnd(G,J):- diagonalEndGame(G,J); diagonalEndGameBis(G,J).
 winningPosition(GRILLE, JOUEUR) :- isWinningLine(GRILLE, JOUEUR) ; isWinningColumn(GRILLE, JOUEUR) ; diagonalEnd(GRILLE,JOUEUR).
 
 fullGrid([]).
-fullGrid([HEAD|SUBGRILLE]) :- length(HEAD,7), fullGrid(SUBGRILLE).
+fullGrid([HEAD|SUBGRILLE]) :- length(HEAD,6), fullGrid(SUBGRILLE).
 
 nextStep(GRILLE, _) :- fullGrid(GRILLE), write('complete grid, it\'s a draw\n').
 nextStep(GRILLE, JOUEUR) :- winningPosition(GRILLE, JOUEUR), write('Joueur '), write(JOUEUR), write(' won, game over').
@@ -107,6 +107,48 @@ play(GRILLE, JOUEUR) :- write(JOUEUR), write(' player, enter a valid column numb
 playIARandom(GRILLE, JOUEUR):- random_between(1,7, N), nth1(N, GRILLE, X), length(X, L), L < 6 -> (saveMove(GRILLE, N, JOUEUR, NEWGRILLE), displayGrid(NEWGRILLE,6),write('\n'),nextStep(NEWGRILLE,JOUEUR)); playIARandom(GRILLE, JOUEUR).
 
 %%%%%%%%%%%%%%%%% MIN MAX %%%%%%%%%%%
+
+estUnMeilleurMove(BestScore,BestScoreAutreCoup,AutreColonne,BestColonne):-
+   (BestScore<BestScoreAutreCoup,
+    BestColonne=AutreColonne,
+   BestScore=BestScoreAutreCoup).
+
+estUnPireMove(BestScore,BestScoreAutreCoup,AutreColonne,BestColonne):-
+   (BestScore>BestScoreAutreCoup,
+    BestColonne=AutreColonne,
+   BestScore=BestScoreAutreCoup).
+
+minimax(Longueur,_,_,Grille,_,_,_,_):-
+   Longueur==0,
+   partieFinie(Grille).
+
+peutJouerACetteColonne(GRILLE, COLONNE):- nth1(COLONNE, GRILLE, X), length(X, XL), L < 6.
+decr(Longueur,LongueurN):- LongueurN is Longueur - 1.
+
+nextJoueur('x','o').
+nextJoueur('o','x').
+
+minimax(Longueur,Joueur,JoueurActuel,GRILLE,BestColonne,BestScore,Score):- JoueurActuel == 'o',
+    write('profondeur : '),write(Longueur),write(' , '),write(Colonne),nl,
+	saveMove(GRILLE, INDEX, JOUEUR, NEWGRILLE),
+    nextJoueur(JoueurActuel,JoueurSuivant),
+    decr(Longueur,LongueurN),
+    minimax(LongueurN,Joueur,JoueurSuivant,NEWGRILLE,BestColonne,BestScore,ScoreInf),
+    score(Grille,Joueur,Score),
+    estUnMeilleurMove(BestScore,ScoreInf,Colonne,BestColonne).
+
+minimax(Longueur,Joueur,JoueurActuel,GRILLE,BestColonne,BestScore,Score):-
+	JoueurActuel == 'x',
+ 
+    write("profondeur : "),write(Longueur),write(" , "),write(Colonne),nl,
+	saveMove(GRILLE, INDEX, JOUEUR, NEWGRILLE) ,
+    nextJoueur(JoueurActuel,JoueurSuivant),
+    decr(Longueur,LongueurN),
+
+    minimax(LongueurN,Joueur,JoueurSuivant,NEWGRILLE,BestColonne,BestScore,ScoreInf),
+ 	score(Grille,Joueur,Score),
+    estUnPireMove(BestScore,ScoreInf,Colonne,BestColonne).
+
 
 
 % possible_move(+PlayerColor, +Board, -PossibleMove)
@@ -138,6 +180,8 @@ eval_board(Board, Value) :-
 eval_board(Board, Value) :-
     score(Board, Value).
 
+
+
 score(GRILLE, SCORE):- score(GRILLE,  1,1, SCORE, [[3,4,5,5,4,3], [4,6,8,8,6,4],[5,8,11,11,8,5], [7,10,13,13,10,7], [5,8,11,11,8,5], [4,6,8,8,6,4],[3,4,5,5,4,3]]), write(SCORE).
 score(GRILLE, LIGNE, COLONNE, SCORE, HEURISTIQUE):- COLONNE < 8, LIGNE == 7, NC is COLONNE + 1, %Arrivée à la fin d une colonne
 													score(GRILLE, 1, NC, SCORE, HEURISTIQUE).
@@ -155,55 +199,10 @@ score(GRILLE, LIGNE, COLONNE, SCORE, HEURISTIQUE):- COLONNE < 8, LIGNE < 7, nth1
 change_max_min(max, min).
 change_max_min(min, max).
 
-% compare_moves(+MinMax, +MoveA, +ValueA, +MoveB, +ValueB, -BetterMove, -BetterValue)
-% Chooses the move with the higher value.
-compare_moves(max, MoveA, ValueA, _, ValueB, MoveA, ValueA) :-
-	ValueA >= ValueB.
-compare_moves(max, _, ValueA, MoveB, ValueB, MoveB, ValueB) :-
-	ValueA < ValueB.
-compare_moves(min, MoveA, ValueA, _, ValueB, MoveA, ValueA) :-
-	ValueA =< ValueB.
-compare_moves(min, _, ValueA, MoveB, ValueB, MoveB, ValueB) :-
-	ValueA > ValueB.
-
-% best_move(+MinMax, +AllMoves, -BestMove, -BestValue)
-% Chooses the next move.
-best_move(max,[],_,-500,0).
-best_move(min,[],_,500,0).
-best_move(MinMax, [Move | RestMoves], BestMove, BestValue, 0) :-
-    eval_board(Move, Value),
-    best_move(MinMax, RestMoves, CurrentBestM, CurrentBestV, 0),
-	compare_moves(MinMax, Move, Value, CurrentBestM, CurrentBestV, BestMove, BestValue).
-
-best_move(MinMax, [Move | RestMoves], BestMove, BestValue, PROFONDEUR) :-
-	PROFONDEUR >0,
-    eval_board(Move, Value),
-    best_move(MinMax, RestMoves, CurrentBestM, CurrentBestV, PROFONDEUR),
-	compare_moves(MinMax, Move, Value, CurrentBestM, CurrentBestV, BestMove, BestValue).
-best_move(MinMax, [Move | RestMoves], BestMove, BestValue, PROFONDEUR) :-
-	PROFONDEUR >0,
-	best_move(MinMax, RestMoves, CurrentBestM, CurrentBestV),
-	change_max_min(MinMax, Other),
-	PROF is PROFONDEUR -1,
-	minimax_step(Other, Move, _, BottomBestV, PROF),
-	compare_moves(MinMax, Move, BottomBestV, CurrentBestM, CurrentBestV, BestMove, BestValue).
-
 % player_color(MinMax, Color)
 % Matches the player color based on the MinMax atom.
 player_color(max, 'o').
 player_color(min, 'x').
-
-% minimax_step(+MinMax, +Board, -BestMove, -BestValue)
-% Chooses the best possible move for the current board.
-minimax_step(MinMax, Board, BestMove, BestValue, PROFONDEUR) :-
-	player_color(MinMax, Color),
-	all_possible_moves(Color, Board, AllMoves),
-    best_move(MinMax, AllMoves, BestMove, BestValue, PROFONDEUR).
-
-% minimax(+Board, -BestMove)
-% Matches the next move based on the current board.
-minimax(Board, BestMove) :- PROFONDEUR is 2,
-	minimax_step(max, Board, BestMove, _, PROFONDEUR).
 
 
 

@@ -78,47 +78,31 @@ play(GRILLE, JOUEUR) :- write(JOUEUR), write(' player, enter a valid column numb
 
 playIARandom(GRILLE, JOUEUR):- random_between(1,7, N), nth1(N, GRILLE, X), length(X, L), L < 6 -> (saveMove(GRILLE, N, JOUEUR, NEWGRILLE), displayGrid(NEWGRILLE,6),write('\n'),nextStep(NEWGRILLE,JOUEUR)); playIARandom(GRILLE, JOUEUR).
 
-%%%%%%%%%%%%%%%%% MIN MAX %%%%%%%%%%%
-% possible_move(+PlayerColor, +Board, -PossibleMove)
-% The first n will be replaced with PlayerColor -> possible move.
-
-
+%%%%%%%%%%% MIN MAX %%%%%%%%%%%
 possibleMove(JOUEUR,GRILLE, NEWGRILLE) :- INDEX >0, INDEX =< 7, nth1(INDEX, GRILLE, COLONNE), length(COLONNE,L), L<6,
 		addAtEnd(JOUEUR, COLONNE, NEWCOLONNE), replaceInThePosition(GRILLE, INDEX, NEWCOLONNE, NEWGRILLE).
 
+allMoves([],J,I,LC).
+allMoves([L|Q],J,I,LC):- (length(L,T), T < 6, append(L3,[I],LC), NEWI is I+1, allMoves(Q,J,NEWI,L3)); (length(L,T), T >= 6, NEWI is I+1, allMoves(Q,J,NEWI,LC)).
+allMoves(G,J,ListeCoups):- I is 1, allMoves(G,J,I,ListeCoups).
 
-% all_possible_moves(+PlayerColor, +Board, -AllMoves)
-% AllMoves will be matched with all possible moves for the current
-% Board.
-% to verify, there must be a better way to generate all possible moves
+allPossibleMoves(JOUEUR, GRILLE, AllMoves) :- allMoves(GRILLE,JOUEUR,ListeCoups), 
+				 allPossibleMoves(JOUEUR, GRILLE, AllMoves, ListeCoups,1).
 
-
-all_moves([],J,I,LC).
-all_moves([L|Q],J,I,LC):- (length(L,T), T < 6, append(L3,[I],LC), NEWI is I+1, all_moves(Q,J,NEWI,L3)); (length(L,T), T >= 6, NEWI is I+1, all_moves(Q,J,NEWI,LC)).
-all_moves(G,J,ListeCoups):- I is 1, all_moves(G,J,I,ListeCoups).
-
-all_possible_moves(JOUEUR, GRILLE, AllMoves) :- all_moves(GRILLE,JOUEUR,ListeCoups), 
-				 all_possible_moves(JOUEUR, GRILLE, AllMoves, ListeCoups,1).
-
-
-all_possible_moves(JOUEUR, GRILLE, AllMoves, ListeCoups,INDEX):- length(ListeCoups, L), INDEX =< L, nth1(INDEX, ListeCoups, C),
-	 I is INDEX + 1,all_possible_moves(JOUEUR, GRILLE, GRILLESUIVANTE, ListeCoups,I), 
+allPossibleMoves(JOUEUR, GRILLE, AllMoves, ListeCoups,INDEX):- length(ListeCoups, L), INDEX =< L, nth1(INDEX, ListeCoups, C),
+	 I is INDEX + 1,allPossibleMoves(JOUEUR, GRILLE, GRILLESUIVANTE, ListeCoups,I), 
 	 saveMove(GRILLE, C, JOUEUR, NEWGRILLE), append(GRILLESUIVANTE, [NEWGRILLE], AllMoves).
 
-all_possible_moves(JOUEUR, GRILLE, GRILLESUIVANTE, ListeCoups,INDEX):- length(ListeCoups, L), INDEX > L, GRILLESUIVANTE = [].
+allPossibleMoves(JOUEUR, GRILLE, GRILLESUIVANTE, ListeCoups,INDEX):- length(ListeCoups, L), INDEX > L, GRILLESUIVANTE = [].
 
-
-
-% eval_board(+Board, -Value)
-% Evaluates the score of the Board.
 eval_board([], Value) :-
     Value is 0.
 eval_board(Board, Value) :-
     winningPosition(Board, 'o'),
-    Value is 500, !.
+    Value is 500000, !.
 eval_board(Board, Value) :-
     winningPosition(Board, 'x'),
-    Value is -500, !.
+    Value is -500000, !.
 eval_board(Board, Value) :-
     fullGrid(Board),
     Value is 0.
@@ -177,7 +161,7 @@ best_move(MinMax, [Move | RestMoves], BestMove, BestValue, PROFONDEUR) :-
 %	write(Other),
 %	write('\n'),
 	PROF is PROFONDEUR -1,
-	minimax_step(Other, Move, _, BottomBestV, PROF),
+	minimaxDepth(Other, Move, _, BottomBestV, PROF),
 	compare_moves(MinMax, Move, BottomBestV, CurrentBestM, CurrentBestV, BestMove, BestValue).
 
 % player_color(MinMax, Color)
@@ -185,17 +169,17 @@ best_move(MinMax, [Move | RestMoves], BestMove, BestValue, PROFONDEUR) :-
 player_color(max, 'o').
 player_color(min, 'x').
 
-% minimax_step(+MinMax, +Board, -BestMove, -BestValue)
+% minimaxDepth(+MinMax, +Board, -BestMove, -BestValue)
 % Chooses the best possible move for the current board.
-minimax_step(MinMax, Board, BestMove, BestValue, PROFONDEUR) :-
+minimaxDepth(MinMax, Board, BestMove, BestValue, PROFONDEUR) :-
 	player_color(MinMax, Color),
-	all_possible_moves(Color, Board, AllMoves),
+	allPossibleMoves(Color, Board, AllMoves),
     best_move(MinMax, AllMoves, BestMove, BestValue, PROFONDEUR).
 
 % minimax(+Board, -BestMove)
 % Matches the next move based on the current board.
-minimax(Board, BestMove) :- PROFONDEUR is 3,
-	minimax_step(max, Board, BestMove, _, PROFONDEUR).
+minimax(Board, BestMove) :- PROFONDEUR is 2,
+	minimaxDepth(max, Board, BestMove, _, PROFONDEUR).
 
 
 
